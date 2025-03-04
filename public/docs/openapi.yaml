@@ -1,0 +1,333 @@
+openapi: 3.0.0
+info:
+  title: Order Management System API
+  version: 1.0.0
+paths:
+  /api/orders:
+    get:
+      summary: Retrieve all orders
+      description: Retrieve a list of all orders.
+      tags:
+        - Orders
+      responses:
+        "200":
+          description: A list of orders.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  orders:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        customer_id:
+                          type: integer
+                          example: 1
+                        menu_item_id:
+                          type: integer
+                          example: 5
+                        total_price:
+                          type: number
+                          format: float
+                          example: 19.99
+                        status:
+                          type: string
+                          example: pending
+        "500":
+          description: Could not fetch orders.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Could not fetch orders. Please try again later.
+    post:
+      summary: Create a new order
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                menu_item_id:
+                  type: integer
+                  example: 2
+                  description: ID of the menu item to order
+                total_price:
+                  type: number
+                  format: float
+                  example: 20.22
+                  description: Total price of the order
+      responses:
+        "201":
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order_id:
+                    type: integer
+                    example: 123
+                    description: ID of the created order
+                  status:
+                    type: string
+                    example: pending
+                    description: Status of the order
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid menu_item_id
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Missing or invalid token
+
+  /api/payments:
+    post:
+      summary: Process a payment
+      description: Process a payment using Stripe.
+      tags:
+        - Payments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+                - currency
+                - stripeToken
+              properties:
+                amount:
+                  type: number
+                  format: float
+                  example: 6.00
+                currency:
+                  type: string
+                  example: usd
+                stripeToken:
+                  type: string
+                  example: tok_visa
+      responses:
+        "200":
+          description: Payment processed successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  charge:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: ch_3QyNafP8AkAJmi241ANLgUku
+                      amount:
+                        type: number
+                        example: 600
+                      currency:
+                        type: string
+                        example: usd
+                      status:
+                        type: string
+                        example: succeeded
+                      payment_method_details:
+                        type: object
+                        properties:
+                          card:
+                            type: object
+                            properties:
+                              brand:
+                                type: string
+                                example: visa
+                              last4:
+                                type: string
+                                example: "4242"
+                              exp_month:
+                                type: integer
+                                example: 3
+                              exp_year:
+                                type: integer
+                                example: 2026
+                      receipt_url:
+                        type: string
+                        example: https://pay.stripe.com/receipts/payment/CAcaFwoVYWNjdF8xT3NMeW5QOEFrQUptaTI0KIGFlL4GMgZbG4-SUHA6LBaBPTs_ayQdeqEEJaSisyTkKPO71Q2IprF1ZnaL6EfrRLBHkueNxHCx1tkr
+        "500":
+          description: Payment processing failed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: There was a problem processing your payment. Please try again later.
+
+  /api/customers/register:
+    post:
+      summary: Registration
+      description: Creates a new customer account with the provided details.
+      tags:
+        - Customers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Jane Doe
+                  description: Full name of the customer
+                email:
+                  type: string
+                  format: email
+                  example: jane@example.com
+                  description: Email address of the customer
+                password:
+                  type: string
+                  format: password
+                  example: secret123
+                  description: Password for the customer account
+                password_confirmation:
+                  type: string
+                  format: password
+                  example: secret123
+                  description: Confirmation of the password
+              required:
+                - name
+                - email
+                - password
+                - password_confirmation
+      responses:
+        "201":
+          description: Customer registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                    description: Unique identifier for the customer
+                  name:
+                    type: string
+                    example: Jane Doe
+                    description: Full name of the customer
+                  email:
+                    type: string
+                    format: email
+                    example: jane@example.com
+                    description: Email address of the customer
+        "400":
+          description: Invalid input or email already registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Email already registered
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: object
+                    properties:
+                      field_name:
+                        type: array
+                        items:
+                          type: string
+                          example: The field_name field is required.
+
+  /api/customers/login:
+    post:
+      summary: Login
+      description: Authenticates a customer using their email and password.
+      tags:
+        - Customers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: jane@example.com
+                  description: Email address of the customer
+                password:
+                  type: string
+                  format: password
+                  example: secret123
+                  description: Password for the customer account
+              required:
+                - email
+                - password
+      responses:
+        "200":
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                    description: JWT token for authenticated access
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid email or password
